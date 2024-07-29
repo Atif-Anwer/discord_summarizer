@@ -72,12 +72,43 @@ async def ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(f'{interaction.user.mention} pong', ephemeral=True)
 
 # --------------------------------------#
-# Command with a group response
-@bot.tree.command(name="summarize")
-@app_commands.describe(no_messages="Last n Number of messages")
-@app_commands.describe(txt="Text to summarize")
-async def grp1(interaction: discord.Interaction, *, no_messages: str, txt: str) -> None:
-    await interaction.response.send_message(f'Group 1 response: {no_messages}', ephemeral=True)
+# Summarize command with three options
+@bot.tree.command(name="summarize", description="Summarize the provided input")
+@app_commands.describe(
+    option      = "Choose one of the options: 'Last n messages', 'Text', or 'Link'",
+    no_messages = "Provide the number of last messages to summarize",
+    user        = "The user to get the last n messages from",
+    text_input  = "Input text to summarize",
+    weblink     = "Weblink to summarize"
+)
+@app_commands.choices(
+    option=[
+        app_commands.Choice(name="Last n messages", value="no_messages"),
+        app_commands.Choice(name="Text", value="text"),
+        app_commands.Choice(name="Link", value="link")
+    ]
+)
+async def summarize(
+    interaction: discord.Interaction,
+    option     : str,
+    no_messages: int = None,
+    user       : discord.User = None,
+    text_input : str = None,
+    weblink    : str = None
+) -> None:
+    if option == "no_messages" and no_messages is not None and user is not None:
+        # Logic to summarize last n messages from the user
+        await interaction.response.send_message(f'Summarizing last {no_messages} messages from {user.name}', ephemeral=True)
+    elif option == "text" and text_input is not None:
+        # Logic to summarize the input text
+        await interaction.response.send_message(f'Summarizing the text: {text_input}', ephemeral=True)
+    elif option == "link" and weblink is not None:
+        # Logic to summarize the weblink
+        await interaction.response.send_message(f'Summarizing the link: {weblink}', ephemeral=True)
+    else:
+        await interaction.response.send_message('Invalid input. Please provide the correct input for the selected option.', ephemeral=True)
+
+
 
 
 # --------------------------------------#

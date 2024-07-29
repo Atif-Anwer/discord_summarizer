@@ -73,7 +73,7 @@ def get_response(user_prompt: str) -> str:
 load_dotenv()
 OPENAI_TOKEN: Final[str]                = os.getenv("OPENAI_API_KEY")
 client, assistant_id, assistant_thread  = load_openai_client_asistant()
-print(assistant_id)
+# print(assistant_id)
 
 # References:
 # https://youtu.be/5rcjGjgJNQc
