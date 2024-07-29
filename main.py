@@ -38,6 +38,9 @@ async def send_message(message: Message, user_message: str) -> None:
         print(e)
 
 # Handling the startup for the bot
+# --------------------------------------#
+#               ON READY                #
+# --------------------------------------#
 @bot.event
 async def on_ready() -> None:
     print(f'{bot.user} is now running!')
@@ -60,17 +63,24 @@ async def on_message(message: Message) -> None:
     print(f'[{channel}] {username}: "{user_message}"')
     await send_message(message, user_message)
 
+# --------------------------------------#
+#             SLASH COMMANDS            #
+# --------------------------------------#
 # Command to reply with 'pong'
 @bot.tree.command(name='ping', description='Replies with pong')
 async def ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(f'{interaction.user.mention} pong', ephemeral=True)
 
+# --------------------------------------#
 # Command with a group response
-@bot.tree.command(name="grp1")
-@app_commands.describe(option_1="Option number 1")
-async def grp1(interaction: discord.Interaction, *, option_1: str) -> None:
-    await interaction.response.send_message(f'Group 1 response: {option_1}', ephemeral=True)
+@bot.tree.command(name="summarize")
+@app_commands.describe(no_messages="Last n Number of messages")
+@app_commands.describe(txt="Text to summarize")
+async def grp1(interaction: discord.Interaction, *, no_messages: str, txt: str) -> None:
+    await interaction.response.send_message(f'Group 1 response: {no_messages}', ephemeral=True)
 
+
+# --------------------------------------#
 # Command to send the user ID
 @bot.tree.command(name="user_id", description='Sends the user ID for a given user.')
 async def user_id(interaction: discord.Interaction, member: discord.Member = None) -> None:
@@ -80,12 +90,16 @@ async def user_id(interaction: discord.Interaction, member: discord.Member = Non
     member_id = member.id
     await interaction.response.send_message(f"ID for {member.name}: {member_id}")
 
+# --------------------------------------#
 # Example cog class
 class Example(commands.Cog):
     @app_commands.command()
     async def example(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_message("This is an example command.", ephemeral=True)
 
+# --------------------------------------#
+#                 SETUP                 #
+# --------------------------------------#
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Example())
 
@@ -93,8 +107,10 @@ async def setup(bot: commands.Bot) -> None:
 def main() -> None:
     bot.run(TOKEN)
 
+# --------------------------------------#
 if __name__ == '__main__':
     main()
 
+# --------------------------------------#
 # References
 # 1. https://youtu.be/GX5Ez0hO_6k
