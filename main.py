@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Final
 
@@ -13,9 +14,9 @@ load_dotenv()
 TOKEN: Final[str] = os.getenv('DISCORD_TOKEN')
 
 # Bot setup with intents
-intents = Intents.default()
+intents                 = Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="/", intents=intents)
+bot                     = commands.Bot(command_prefix="/", intents=intents)
 
 # Send message functionality
 async def send_message(message: Message, user_message: str) -> None:
@@ -56,9 +57,9 @@ async def on_message(message: Message) -> None:
     if message.author == bot.user:
         return
 
-    username = str(message.author)
+    username     = str(message.author)
     user_message = message.content
-    channel = str(message.channel)
+    channel      = str(message.channel)
 
     print(f'[{channel}] {username}: "{user_message}"')
     await send_message(message, user_message)
@@ -73,44 +74,27 @@ async def ping(interaction: discord.Interaction) -> None:
 
 # --------------------------------------#
 # Summarize command with three options
-@bot.tree.command(name="summarize", description="Summarize the provided input")
-@app_commands.describe(
-    option      = "Choose one of the options: 'Last n messages', 'Text', or 'Link'",
-    no_messages = "Provide the number of last messages to summarize",
-    user        = "The user to get the last n messages from",
-    text_input  = "Input text to summarize",
-    weblink     = "Weblink to summarize"
-)
-@app_commands.choices(
-    option=[
-        app_commands.Choice(name="Last n messages", value="no_messages"),
-        app_commands.Choice(name="Text", value="text"),
-        app_commands.Choice(name="Link", value="link")
-    ]
-)
-async def summarize(
-    interaction: discord.Interaction,
-    option     : str,
-    no_messages: int = None,
-    user       : discord.User = None,
-    text_input : str = None,
-    weblink    : str = None
-) -> None:
-    if option == "no_messages" and no_messages is not None and user is not None:
-        # Logic to summarize last n messages from the user
+class Summarize(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    # Summarize last n messages from the user
+    @app_commands.command(name="last_messages", description="Summarize the last n messages from a user")
+    @app_commands.describe(no_messages="Provide the number of last messages to summarize", user="The user to get the last n messages from")
+    async def last_messages(self, interaction: discord.Interaction, no_messages: int, user: discord.User) -> None:
         await interaction.response.send_message(f'Summarizing last {no_messages} messages from {user.name}', ephemeral=True)
-    elif option == "text" and text_input is not None:
-        # Logic to summarize the input text
+
+    # Summarize the input text
+    @app_commands.command(name="text", description="Summarize the provided text")
+    @app_commands.describe(text_input="Input text to summarize")
+    async def text(self, interaction: discord.Interaction, text_input: str) -> None:
         await interaction.response.send_message(f'Summarizing the text: {text_input}', ephemeral=True)
-    elif option == "link" and weblink is not None:
-        # Logic to summarize the weblink
+
+    # Logic to summarize the weblink
+    @app_commands.command(name="link", description="Summarize the provided link")
+    @app_commands.describe(weblink="Weblink to summarize")
+    async def link(self, interaction: discord.Interaction, weblink: str) -> None:
         await interaction.response.send_message(f'Summarizing the link: {weblink}', ephemeral=True)
-    else:
-        await interaction.response.send_message('Invalid input. Please provide the correct input for the selected option.', ephemeral=True)
-
-
-
-
 # --------------------------------------#
 # Command to send the user ID
 @bot.tree.command(name="user_id", description='Sends the user ID for a given user.')
@@ -121,26 +105,21 @@ async def user_id(interaction: discord.Interaction, member: discord.Member = Non
     member_id = member.id
     await interaction.response.send_message(f"ID for {member.name}: {member_id}")
 
-# --------------------------------------#
-# Example cog class
-class Example(commands.Cog):
-    @app_commands.command()
-    async def example(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message("This is an example command.", ephemeral=True)
 
 # --------------------------------------#
 #                 SETUP                 #
 # --------------------------------------#
-async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Example())
+async def setup(bot) -> None:
+    await bot.add_cog(Summarize(bot))
 
 # Main entry point
-def main() -> None:
-    bot.run(TOKEN)
+async def main() -> None:
+    await setup(bot)
+    await bot.start(TOKEN)
 
 # --------------------------------------#
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
 
 # --------------------------------------#
 # References
