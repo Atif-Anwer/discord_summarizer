@@ -1,5 +1,6 @@
 import os
 import time
+from random import randint
 from typing import Final
 
 from dotenv import load_dotenv
@@ -27,21 +28,18 @@ def get_response(user_prompt: str) -> str:
 
     user_prompt: str = user_prompt.lower()
 
-    # # Hardcoded text replies for testing
-    # if lowered == '':
-    #     return 'Well, you\'re awfully silent...'
-    # elif 'hello' in lowered:
-    #     return 'Hello there!'
-    # elif 'how are you' in lowered:
-    #     return 'Good, thanks!'
-    # elif 'bye' in lowered:
-    #     return 'See you!'
-    # elif 'roll dice' in lowered:
-    #     return f'You rolled: {randint(1, 6)}'
-    # else:
-    #     return choice(['I do not understand...',
-    #                    'What are you talking about?',
-    #                    'Do you mind rephrasing that?'])
+    # Hardcoded text replies for testing
+    if user_prompt == ' ':
+        return 'Well, you\'re awfully silent...'
+    elif 'hello' in user_prompt:
+        return 'Hello there!'
+    elif 'how are you' in user_prompt:
+        return 'Good, thanks!'
+    elif 'bye' in user_prompt:
+        return 'See you!'
+    elif 'roll dice' in user_prompt:
+        return f'You rolled: {randint(1, 6)}'
+
     # -------------------------------
 
     # Add a message to the thread
