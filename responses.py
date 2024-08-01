@@ -24,7 +24,7 @@ def wait_on_run(run, thread):
         time.sleep(0.5)
     return run
 
-def get_response(user_prompt: str) -> str:
+def get_response_from_gpt(user_prompt: str) -> str:
 
     user_prompt: str = user_prompt.lower()
 
