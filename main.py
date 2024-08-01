@@ -4,12 +4,15 @@ Main module for Discord bot with GPT integration and various commands.
 
 import asyncio
 import os
+import time
+from random import randint
 from typing import Final
 
 import discord
 from discord import Intents, Message, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from responses import get_response_from_gpt
 
@@ -81,7 +84,23 @@ async def on_message(message: Message) -> None:
     channel      = str(message.channel)
 
     print(f'[{channel}] {username}: "{user_message}"')
-    await send_message_to_gpt(message, user_message)
+
+    user_prompt: str = user_message.lower()
+    # Hardcoded text replies for testing
+    if user_prompt == ' ':
+        response: str =  'Well, you\'re awfully silent...'
+    elif 'hello' in user_prompt:
+        response: str =  'Hello there!'
+    elif 'how are you' in user_prompt:
+        response: str =  'Good, thanks!'
+    elif 'bye' in user_prompt:
+        response: str =  'See you!'
+    elif 'roll dice' in user_prompt:
+        response: str =  f'You rolled: {randint(1, 6)}'
+
+    print(f'response: >> {response}')
+    await message.channel.send(response, mention_author=True)
+    # await send_message_to_gpt(message, user_message)
 
 # --------------------------------------#
 #             SLASH COMMANDS            #
