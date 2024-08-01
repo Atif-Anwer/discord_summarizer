@@ -3,12 +3,13 @@ Main module for Discord bot with GPT integration and various commands.
 """
 
 import asyncio
-import os
 import time
+from datetime import datetime, timedelta, timezone
 from random import randint
 from typing import Final
 
 import discord
+import requests
 from discord import Intents, Message, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -102,6 +103,21 @@ async def on_message(message: Message) -> None:
     await message.channel.send(response, mention_author=True)
     # await send_message_to_gpt(message, user_message)
 
+def get_usage():
+    client = OpenAI()
+
+    end_date = datetime.now(timezone.utc)
+    start_date = datetime(end_date.year, end_date.month, 1, tzinfo=timezone.utc)
+
+    try:
+        usage = client.billing.usage.retrieve(
+            start_date=start_date.date(),
+            end_date=end_date.date()
+        )
+        return f"Total usage for this month: ${usage.total_usage / 100:.2f}"
+    except Exception as e:
+        return f"Failed to retrieve usage data: {str(e)}"
+
 # --------------------------------------#
 #             SLASH COMMANDS            #
 # --------------------------------------#
@@ -184,6 +200,67 @@ class Summarize(commands.Cog):
             f'Summarizing the link: {weblink}', ephemeral=True)
         # TODO: Implement web scraping and summarization logic
 
+    @app_commands.command(  name        ="open_api_key",
+                            description ="Check the current OpenAPI key in use")
+    async def openapi_key(self, interaction: discord.Interaction) -> None:
+        """
+        Check and print the current open API key.
+        """
+        api_key = os.getenv("OPENAI_API_KEY")
+        await interaction.response.send_message( f'Existing OpenAPI key in use: {api_key}', ephemeral=True)
+
+    @app_commands.command(name="usage", description="Retrieve OpenAI API usage and cost for the current month")
+    async def usage(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        usage_data = await asyncio.to_thread(get_usage)
+        await interaction.followup.send(f"Usage Data: {usage_data}", ephemeral=True)
+
+    @app_commands.command(name="summary_by_date", description="Summarize messages from a user between two dates")
+    @app_commands.describe(
+        user="The user whose messages to summarize",
+        from_date="Start date (YYYY-MM-DD)",
+        to_date="End date (YYYY-MM-DD)"
+    )
+    async def summary_by_date(
+            self,
+            interaction: discord.Interaction,
+            user: discord.User,
+            from_date: str,
+            to_date: str
+        ) -> None:
+        """
+        Summarize messages from a user between two specified dates.
+
+        Args:
+            interaction (discord.Interaction): The interaction object.
+            user (discord.User): The user whose messages to summarize.
+            from_date (str): Start date in YYYY-MM-DD format.
+            to_date (str): End date in YYYY-MM-DD format.
+        """
+        await interaction.response.defer()  # Defer the response immediately
+
+        try:
+            start_date = datetime.strptime(from_date, "%Y-%m-%d")
+            end_date   = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        except ValueError:
+            await interaction.followup.send("Invalid date format. Please use YYYY-MM-DD.", ephemeral=True)
+            return
+
+        messages = []
+        async for message in interaction.channel.history(limit=None, after=start_date, before=end_date):
+            if message.author == user:
+                messages.append(message.content)
+
+        if not messages:
+            await interaction.followup.send(f"No messages found from {user.name} between {from_date} and {to_date}.", ephemeral=True)
+            return
+
+        text_input = "\n".join(messages)
+
+        await interaction.followup.send(
+            f'Summarizing {len(messages)} messages from {user.name} between {from_date} and {to_date}', ephemeral=True)
+        await send_message_to_gpt(interaction, text_input)
+
 @bot.tree.command(name="user_id", description='Sends the user ID for a given user.')
 async def user_id(interaction: discord.Interaction, member: discord.Member = None) -> None:
     """
@@ -198,6 +275,11 @@ async def user_id(interaction: discord.Interaction, member: discord.Member = Non
 
     member_id = member.id
     await interaction.response.send_message(f"ID for {member.name}: {member_id}")
+
+# /addprompt (name) (prompt)
+# /summary from time to time (from_time) (to_time)
+# /help or # /listModes
+# /unread summary
 
 
 # --------------------------------------#
@@ -217,4 +299,4 @@ if __name__ == '__main__':
     asyncio.run(main())
 
 # References
-# 1. https://youtu.be/GX5Ez0hO_6k
+# 1. https://youtu.be/GX5Ez0hO_6k# 1. https://youtu.be/GX5Ez0hO_6k# 1. https://youtu.be/GX5Ez0hO_6k# 1. https://youtu.be/GX5Ez0hO_6k

@@ -14,17 +14,10 @@ Discord bot for summarizing the last n messages by a user. Uses OpenAI and a cus
 # Supported commands:
 - @{bot name} -  A set of fixed text replies to test the bot
 - /check OpenAPI key
-- /addprompt (name) (prompt)
 - /cost
 - /summary from time to time (from_time) (to_time)
 - /help
-- /invite
-- /listModes
-- /ping
-- /setAPI key
-- /set language
 - /unread summary
-- /changelog
 
 
 # Usage:
