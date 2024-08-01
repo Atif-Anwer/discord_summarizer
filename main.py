@@ -1,3 +1,7 @@
+"""
+Main module for Discord bot with GPT integration and various commands.
+"""
+
 import asyncio
 import os
 from typing import Final
@@ -22,6 +26,13 @@ bot                     = commands.Bot(command_prefix="/", intents=intents)
 #              SEND MESSAGE             #
 # --------------------------------------#
 async def send_message_to_gpt(interaction: discord.Interaction, user_message: str) -> None:
+    """
+    Send a message to GPT and handle the response.
+
+    Args:
+        interaction (discord.Interaction): The interaction object.
+        user_message (str): The user's message to process.
+    """
     if not user_message:
         return
 
@@ -36,8 +47,7 @@ async def send_message_to_gpt(interaction: discord.Interaction, user_message: st
         await interaction.user.send(response)
     else:
         print(f'response: >> {response}')
-        # Use followup.send() after deferring the interaction
-        await interaction.followup.send(response, ephemeral=False)  # Ensure ephemeral is False
+        await interaction.followup.send(response, ephemeral=False)
 
 # Handling the startup for the bot
 # --------------------------------------#
@@ -45,6 +55,7 @@ async def send_message_to_gpt(interaction: discord.Interaction, user_message: st
 # --------------------------------------#
 @bot.event
 async def on_ready() -> None:
+    """Handle bot startup and command synchronization."""
     print(f'{bot.user} is now running!')
     try:
         synced_commands = await bot.tree.sync()
@@ -54,10 +65,14 @@ async def on_ready() -> None:
     except discord.errors.DiscordException as e:
         print(f"Discord-related error occurred while syncing commands: {e}")
 
-# Handling incoming messages
 @bot.event
 async def on_message(message: Message) -> None:
-    """Handle incoming messages."""
+    """
+    Handle incoming messages.
+
+    Args:
+        message (Message): The incoming message object.
+    """
     if message.author == bot.user:
         return
 
@@ -74,18 +89,33 @@ async def on_message(message: Message) -> None:
 # Command to reply with 'pong'
 @bot.tree.command(name='ping', description='Replies with pong')
 async def ping(interaction: discord.Interaction) -> None:
+    """Simple ping command to check bot responsiveness."""
     await interaction.response.send_message(f'{interaction.user.mention} pong', ephemeral=True)
 
 # --------------------------------------#
 # Summarize command with three options
 class Summarize(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    """Cog for summarization-related commands."""
 
-    @app_commands.command(name="last_messages", description="Summarize the last n messages from a user")
-    @app_commands.describe(no_messages="Provide the number of last messages to summarize",
-                           user="The user to get the last n messages from")
-    async def last_messages(self, interaction: discord.Interaction, no_messages: int, user: discord.User) -> None:
+    def __init__(self, bot_instance):
+        self.bot = bot_instance
+
+    @app_commands.command(  name        ="last_messages",
+                            description ="Summarize the last n messages from a user")
+    @app_commands.describe( no_messages ="Provide the number of last messages to summarize",
+                            user        ="The user to get the last n messages from")
+    async def last_messages(self,
+                            interaction: discord.Interaction,
+                            no_messages: int,
+                            user: discord.User) -> None:
+        """
+        Summarize the last n messages from a specific user.
+
+        Args:
+            interaction (discord.Interaction): The interaction object.
+            no_messages (int): Number of messages to summarize.
+            user (discord.User): The user whose messages to summarize.
+        """
         await interaction.response.defer()  # Defer the response immediately
 
         messages = []
@@ -106,25 +136,44 @@ class Summarize(commands.Cog):
             f'Summarizing last {len(messages)} messages from {user.name}', ephemeral=True)
         await send_message_to_gpt(interaction, text_input)
 
-    # Summarize the input text
-    @app_commands.command(name="text", description="Summarize the provided text")
-    @app_commands.describe(text_input="Input text to summarize")
+    @app_commands.command(  name        ="text",
+                            description ="Summarize the provided text")
+    @app_commands.describe( text_input  ="Input text to summarize")
     async def text(self, interaction: discord.Interaction, text_input: str) -> None:
+        """
+        Summarize the provided text.
+
+        Args:
+            interaction (discord.Interaction): The interaction object.
+            text_input (str): The text to summarize.
+        """
         await interaction.response.defer()  # Acknowledge the interaction
         await send_message_to_gpt(interaction, text_input)
 
-    # Logic to summarize the weblink
     @app_commands.command(  name        ="link",
                             description ="Summarize the provided link")
     @app_commands.describe( weblink     ="Weblink to summarize")
     async def link(self, interaction: discord.Interaction, weblink: str) -> None:
+        """
+        Summarize the content of a provided web link.
+
+        Args:
+            interaction (discord.Interaction): The interaction object.
+            weblink (str): The web link to summarize.
+        """
         await interaction.response.send_message(
             f'Summarizing the link: {weblink}', ephemeral=True)
-# --------------------------------------#
-# Command to send the user ID
-@bot.tree.command(  name        ="user_id",
-                    description ='Sends the user ID for a given user.')
+        # TODO: Implement web scraping and summarization logic
+
+@bot.tree.command(name="user_id", description='Sends the user ID for a given user.')
 async def user_id(interaction: discord.Interaction, member: discord.Member = None) -> None:
+    """
+    Get the user ID for a given user or the command invoker.
+
+    Args:
+        interaction (discord.Interaction): The interaction object.
+        member (discord.Member, optional): The member to get the ID for. Defaults to None.
+    """
     if member is None:
         member = interaction.user
 
@@ -136,17 +185,17 @@ async def user_id(interaction: discord.Interaction, member: discord.Member = Non
 #                 SETUP                 #
 # --------------------------------------#
 async def setup(bot) -> None:
+    """Set up the bot by adding cogs."""
     await bot.add_cog(Summarize(bot))
 
-# Main entry point
 async def main() -> None:
+    """Main entry point for the bot."""
     await setup(bot)
     await bot.start(TOKEN)
-
 # --------------------------------------#
+
 if __name__ == '__main__':
     asyncio.run(main())
 
-# --------------------------------------#
 # References
 # 1. https://youtu.be/GX5Ez0hO_6k
